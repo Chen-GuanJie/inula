@@ -11,6 +11,20 @@ on:
     branches: [main]
 
 jobs:
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: mrdivyansh/eslint-action@v1.0.7
+        # GITHUB_TOKEN in forked repositories is read-only
+        # https://help.github.com/en/actions/reference/events-that-trigger-workflows#pull-request-event-pull_request
+        if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }} 
+        with:
+          repo-token: ${{secrets.GITHUB_TOKEN}}
+          eslint-rc: .eslintrc.js
+          execute-on-files:
+            - ./packages
+
   build:
     runs-on: ubuntu-latest
 
@@ -25,16 +39,6 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install
-
-      - uses: mrdivyansh/eslint-action@v1.0.7
-        # GITHUB_TOKEN in forked repositories is read-only
-        # https://help.github.com/en/actions/reference/events-that-trigger-workflows#pull-request-event-pull_request
-        # if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
-        with:
-          repo-token: ${{secrets.GITHUB_TOKEN}}
-          eslint-rc: .eslintrc.js
-          execute-on-files:
-            - ./packages/**/*.ts
 
       # - name: Run Tests
       #   run: pnpm run test:inula-jest | tee ./coverage.txt && exit ${PIPESTATUS[0]}
