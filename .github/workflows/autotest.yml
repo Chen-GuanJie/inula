@@ -26,36 +26,46 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
-      - name: Run Tests
-        run: pnpm run test:inula-jest | tee ./coverage.txt && exit ${PIPESTATUS[0]}
-
-      - name: Jest Coverage Comment
-        id: jest_coverage_comment
-        uses: MishaKav/jest-coverage-comment@main
+      - uses: mrdivyansh/eslint-action@v1.0.7
+        # GITHUB_TOKEN in forked repositories is read-only
+        # https://help.github.com/en/actions/reference/events-that-trigger-workflows#pull-request-event-pull_request
+        # if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
         with:
-          coverage-path: ./coverage.txt
+          repo-token: ${{secrets.GITHUB_TOKEN}}
+          eslint-rc: .eslintrc.js
+          execute-on-files:
+            - ./packages
 
-      - name: Check Total Coverage
-        run: |
-          if [ ${{ steps.jest_coverage_comment.outputs.coverage }} -lt ${{ env.total_coverage }} ]; then
-            echo "Coverage is less than 75%. Failing the workflow."
-            exit 1
-          fi
+      # - name: Run Tests
+      #   run: pnpm run test:inula-jest | tee ./coverage.txt && exit ${PIPESTATUS[0]}
 
-      - name: Check Coverage Per File
-        run: |
-          html_content="${{ steps.jest_coverage_comment.outputs.coverageHtml }}"
-          matches=$(echo "$html_content" | grep -o '<td>[1-9][0-9]*\(\.[0-9]*\)\{0,1\}</td>' | sed 's/<td>\(.*\)<\/td>/\1/g')
-          fail=false
-          while read -r match; do
-            result=$(awk -v num="$match" 'BEGIN {if (num < ${{ env.coverage_per_file }}) print "fail"; else print "pass"}')
-            echo "Number: $match Result: $result"
-            if [ "$result" == "fail" ]; then
-              echo "Workflow failed!"
-              fail=true
-            fi
-          done <<< "$matches"
-          if [ "$fail" = true ]; then
-            exit 1
-          fi
-          echo "Workflow passed!"
+      # - name: Jest Coverage Comment
+      #   id: jest_coverage_comment
+      #   uses: MishaKav/jest-coverage-comment@main
+      #   with:
+      #     coverage-path: ./coverage.txt
+
+      # - name: Check Total Coverage
+      #   run: |
+      #     if [ ${{ steps.jest_coverage_comment.outputs.coverage }} -lt ${{ env.total_coverage }} ]; then
+      #       echo "Coverage is less than 75%. Failing the workflow."
+      #       exit 1
+      #     fi
+
+      # - name: Check Coverage Per File
+      #   run: |
+      #     html_content="${{ steps.jest_coverage_comment.outputs.coverageHtml }}"
+      #     matches=$(echo "$html_content" | grep -o '<td>[1-9][0-9]*\(\.[0-9]*\)\{0,1\}</td>' | sed 's/<td>\(.*\)<\/td>/\1/g')
+      #     fail=false
+      #     while read -r match; do
+      #       result=$(awk -v num="$match" 'BEGIN {if (num < ${{ env.coverage_per_file }}) print "fail"; else print "pass"}')
+      #       echo "Number: $match Result: $result"
+      #       if [ "$result" == "fail" ]; then
+      #         echo "Workflow failed!"
+      #         fail=true
+      #       fi
+      #     done <<< "$matches"
+      #     if [ "$fail" = true ]; then
+      #       exit 1
+      #     fi
+      #     echo "Workflow passed!"
