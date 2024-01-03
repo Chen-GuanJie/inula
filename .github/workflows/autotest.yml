@@ -34,7 +34,7 @@ jobs:
           repo-token: ${{secrets.GITHUB_TOKEN}}
           eslint-rc: .eslintrc.js
           execute-on-files:
-            - ./packages
+            - ./packages/**/*.ts
 
       # - name: Run Tests
       #   run: pnpm run test:inula-jest | tee ./coverage.txt && exit ${PIPESTATUS[0]}
